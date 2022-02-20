@@ -77,7 +77,68 @@ def part1 ():
 ############## Beginning of Part 2 ##############
 # Note: any functions/variables for Part 2 will go here
 
-# def part2 ():
+def part2 (argv):
+    print("********** PART 2 **********")
+    # TODO: fill in the IP address of the host and the port number
+    HOST = '192.17.61.22'
+    PORT = argv[1]
+    sin = (HOST, PORT)
+
+    # TODO: create a datagram socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    except socket.error as e:
+        print('Failed to create socket.')
+        sys.exit()
+
+    # TODO: Bind the socket to address
+    try:
+        sock.bind(sin)
+    except socket.error as e:
+        print('Failed to bind socket.')
+        sys.exit()
+
+    print("Waiting ...")
+    pubkey_server = getPubKey()
+
+    # TODO: receive message from the client and record the address of the client socket
+    while True:
+        data = sock.recvfrom(BUFFER)
+        pubkey_client = data[0]
+        address = data[1]
+
+        # encrypt public key of Server
+        pubkey_server_e = encrypt(pubkey_server, pubkey_client)
+        sock.sendto(pubkey_server_e, address)
+
+        # receive messages and checksum from Client
+        message_e = sock.recvfrom(BUFFER)
+        receive_checksum = sock.recvfrom(BUFFER)
+
+        message = decrypt(message_e[0])
+        cal_checksum = checksum(message)
+
+        # TODO: convert the message from byte to string and print it to the screen
+        str_message = message.decode('utf-8')
+        int_checksum = int(receive_checksum.decode('utf-8'))
+        print("********** NEW MESSAGE **********")
+        print('Received Message: ' + str_message)
+        print('Received Client Checksum:', int_checksum)
+        print('Calculated Checksum:', cal_checksum)
+
+        # TODO:
+        # 1. convert the acknowledgement (e.g., integer of 1) from host byte order to network byte order
+        # 2. send the converted acknowledgement to the client
+        if cal_checksum == int_checksum:
+            acknowledgement = socket.htons(1)
+            sock.sendto(acknowledgement.to_bytes(2, 'big'), address)
+        else:
+            acknowledgement = socket.htons(0)
+            sock.sendto(acknowledgement.to_bytes(2, 'big'), address)
+
+        # TODO: close the socket
+        break
+    sock.close()
 
 
 
@@ -91,6 +152,6 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         part1()
     else:
-        part2()
+        part2(sys.argv)
 
 

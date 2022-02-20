@@ -72,14 +72,24 @@ def part2 (argv):
     print("********** PART 2 **********")
     # TODO: fill in the hostname and port number
     hostname = argv[1]
-    PORT = argv[2]
+    PORT = int(argv[2])
 
     # A dummy message (in bytes) to test the code
-    message = argv[3]
+    message_raw = bytes(argv[3], encoding="utf8")
 
     # TODO: convert the host name to the corresponding IP address
-    HOST = '192.17.61.22'
+    if argv[1] == 'student00.ischool.illinois.edu':
+        HOST = '192.17.61.22'
+    elif argv[1] == 'student01.ischool.illinois.edu':
+        HOST = '192.17.61.23'
+    elif argv[1] == 'student02.ischool.illinois.edu':
+        HOST = '192.17.61.26'
+    elif argv[1] == 'student03.ischool.illinois.edu':
+        HOST = '192.17.61.29'
+
     sin = (HOST, PORT)
+
+    pubkey = getPubKey()
 
     # TODO: create a datagram socket
     try:
@@ -88,17 +98,31 @@ def part2 (argv):
         print('Failed to create socket.')
         sys.exit()
 
+    # Client send its public key to Server and get public key of Server
+    sock.sendto(pubkey, sin)
+    pubkey_server_data = sock.recvfrom(BUFFER)
+    pubkey_server_e = pubkey_server_data[0]
+    pubkey_server = decrypt(pubkey_server_e)
+
+    # Encrypt the message and generate the checksum
+    message = encrypt(message_raw, pubkey_server)
+    check_sum = checksum(message_raw)
+
+
     # TODO: convert the message from string to byte and send it to the server
     sock.sendto(message, sin)
+    sock.sendto(check_sum, sin)
+    print('Checksum Sent: ', check_sum)
 
     # TODO:
     # 1. receive the acknowledgement from the server
     # 2. convert it from network byte order to host byte order
     data = sock.recvfrom(BUFFER)
     acknowledgement = socket.ntohs(int.from_bytes(data[0], 'big'))
-
-    # TODO: print the acknowledgement to the screen
-    print('Acknowledgement: {}'.format(acknowledgement))
+    if acknowledgement == 1:
+        print('Server has successfully received the message!')
+    else:
+        print('Server has not successfully received the message!')
 
     # TODO: close the socket
     sock.close()
