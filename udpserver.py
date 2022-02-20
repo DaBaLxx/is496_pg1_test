@@ -98,11 +98,11 @@ def part2 (argv):
         print('Failed to bind socket.')
         sys.exit()
 
-    print("Waiting ...")
     pubkey_server = getPubKey()
 
     # TODO: receive message from the client and record the address of the client socket
     while True:
+        print("Waiting ...")
         data = sock.recvfrom(BUFFER)
         pubkey_client = data[0]
         address = data[1]
@@ -113,31 +113,28 @@ def part2 (argv):
 
         # receive messages and checksum from Client
         message_e = sock.recvfrom(BUFFER)
-        receive_checksum = sock.recvfrom(BUFFER)
+        r_checksum = sock.recvfrom(BUFFER)
 
         message = decrypt(message_e[0])
         cal_checksum = checksum(message)
 
         # TODO: convert the message from byte to string and print it to the screen
         str_message = message.decode('utf-8')
-        int_checksum = int(receive_checksum.decode('utf-8'))
+        r_checksum_int = int(r_checksum[0].decode('utf-8'))
         print("********** NEW MESSAGE **********")
         print('Received Message: ' + str_message)
-        print('Received Client Checksum:', int_checksum)
+        print('Received Client Checksum:', r_checksum_int)
         print('Calculated Checksum:', cal_checksum)
 
         # TODO:
         # 1. convert the acknowledgement (e.g., integer of 1) from host byte order to network byte order
         # 2. send the converted acknowledgement to the client
-        if cal_checksum == int_checksum:
+        if cal_checksum == r_checksum_int:
             acknowledgement = socket.htons(1)
             sock.sendto(acknowledgement.to_bytes(2, 'big'), address)
         else:
             acknowledgement = socket.htons(0)
             sock.sendto(acknowledgement.to_bytes(2, 'big'), address)
-
-        # TODO: close the socket
-        break
     sock.close()
 
 

@@ -19,7 +19,7 @@ from pg1lib import *
 
 ############## Beginning of Part 1 ##############
 # TODO: define a buffer size for the message to be read from the UDP socket
-BUFFER = 1024
+BUFFER = 2048
 
 
 def part1 ():
@@ -100,19 +100,21 @@ def part2 (argv):
 
     # Client send its public key to Server and get public key of Server
     sock.sendto(pubkey, sin)
+    start = time.time() * 1000000
     pubkey_server_data = sock.recvfrom(BUFFER)
     pubkey_server_e = pubkey_server_data[0]
     pubkey_server = decrypt(pubkey_server_e)
 
     # Encrypt the message and generate the checksum
     message = encrypt(message_raw, pubkey_server)
-    check_sum = checksum(message_raw)
+    checksum_int = checksum(message_raw)
+    checksum_b = bytes(str(checksum_int), encoding='utf8')
 
 
     # TODO: convert the message from string to byte and send it to the server
     sock.sendto(message, sin)
-    sock.sendto(check_sum, sin)
-    print('Checksum Sent: ', check_sum)
+    sock.sendto(checksum_b, sin)
+    print('Checksum Sent: ', checksum_int)
 
     # TODO:
     # 1. receive the acknowledgement from the server
@@ -124,6 +126,8 @@ def part2 (argv):
     else:
         print('Server has not successfully received the message!')
 
+    end = time.time() * 1000000
+    print('RTT: ', end - start, 'us')
     # TODO: close the socket
     sock.close()
 
