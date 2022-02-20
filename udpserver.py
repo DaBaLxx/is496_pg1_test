@@ -81,7 +81,7 @@ def part2 (argv):
     print("********** PART 2 **********")
     # TODO: fill in the IP address of the host and the port number
     HOST = '192.17.61.22'
-    PORT = argv[1]
+    PORT = int(argv[1])
     sin = (HOST, PORT)
 
     # TODO: create a datagram socket
